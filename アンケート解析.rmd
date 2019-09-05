@@ -1,0 +1,56 @@
+---
+title: "【滋賀大学×マクロミル】"
+subtitle: "滋賀大学"
+author: "滋賀大学"
+date: "最終更新: `r format(Sys.time(), '%Y/%m/%d')`"
+output:
+  html_document:
+   number_section: true
+   toc: true
+   fig_width: 9
+   fig_height: 6
+# output:
+#   html_document:
+#     fig_width: 9
+#     fig_height: 6
+---
+
+# data 読み込み 
+## 必要パッケージ load
+```{r, warning=FALSE}
+suppressMessages(library(dplyr))
+```
+
+## 作業folder 指定
+```{r, eval=F}
+setwd("環境に応じてファイルのパスを指定")
+```
+
+
+## data import
+```{r}
+filelists <- dir(pattern = "csv")
+filelists
+kagome <- read.csv(filelists[2], fileEncoding = "cp932")
+tbl_df(kagome)
+```
+## kagome data 探索
+```{r}
+kagome %>% colnames()
+kagome %>% dim()
+kagome %>% str()
+```
+
+
+```{r}
+filelists <- dir(pattern = "csv")
+filelists
+kagome <- read.csv(filelists[1], header=F, fileEncoding = "cp932")
+tbl_df(kagome)
+```
+## kagome data 探索
+```{r}
+kagome %>% colnames()
+kagome %>% dim()
+kagome %>% str()
+```
