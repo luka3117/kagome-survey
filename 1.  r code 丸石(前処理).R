@@ -1,0 +1,135 @@
+# install.packages("dplyr")
+suppressMessages(library(dplyr))
+
+# setwd("C:/Users/uasami reo/Downloads/マクロミル/07_カゴメ部門(FIX)/分析用データ/アンケートデータ/01_ローデータ/01_スクリーニングデータ")
+
+### pre processing start ###
+
+kagome <- read.csv("978145_rawdata.csv", fileEncoding = "cp932")
+
+kagome.survey <-
+  kagome %>% select(-AGEID,-AREA,-Q1_14FA, -ANSWERDATE, -CELL, -SAMPLEID, -CELLNAME, -Q6_6FA, -Q7_6FA) %>%
+  mutate(id = 1:nrow(.)) %>%
+  select(id, everything())
+
+
+attach(kagome.survey)
+Q2_t <- (Q2S1 + Q2S4) / 2
+Q2_n <- (Q2S2 + Q2S3 + Q2S5 + Q2S6) / 4
+Q3_t <- (Q3S1 + Q3S4) / 2
+Q3_n <- (Q3S2 + Q3S3 + Q3S5 + Q3S6) / 4
+Q4_t <- (Q4S1 + Q4S4) / 2
+Q4_n <-  (Q4S2 + Q4S3 + Q4S5 + Q4S6) /  4
+Q5_t <- (Q5S1 + Q5S4) / 2
+Q5_n <-  (Q5S2 + Q5S3 + Q5S5 + Q5S6) / 4
+
+kagome.survey <-
+  kagome.survey %>% 
+  select(-Q2S1:-Q5S6) %>% tbl_df
+
+kagome.survey <-
+  kagome.survey %>% mutate(Q2_t, Q2_n, Q3_t, Q3_n, Q4_t, Q4_n, Q5_t, Q5_n)%>% 
+  select(
+    id,
+    SEX,
+    AGE,
+    PREFECTURE,
+    JOB,
+    Q1_1:Q1_14,
+    Q2_t,
+    Q2_n,
+    Q3_t,
+    Q3_n,
+    Q4_t,
+    Q4_n,
+    Q5_t,
+    Q5_n,
+    everything()
+  )
+#もっと変数減らしたりする
+
+kagome.survey %>% tbl_df()
+
+#JOBを学生=1とそれ以外=0にする
+kagome.survey$JOB <-
+  ifelse(kagome.survey$JOB < 10 | kagome.survey$JOB > 10 , 0, 1)
+#↑学生少なすぎるけど、大丈夫かな、、、
+
+#Q1の変数を"1人暮らし","配偶者","家族"の3つにする
+
+kagome.survey <-
+  kagome.survey %>% mutate(一人暮らし = Q1_1) %>% select(-Q1_1) %>%
+  mutate(配偶者 = Q1_2) %>% select(-Q1_2) %>%
+  mutate(家族 = Q1_3 + Q1_4 + Q1_5 + Q1_6 + Q1_7 + Q1_8 + Q1_9 + Q1_10 + Q1_11 +
+             Q1_12 + Q1_13) %>%
+  select(-Q1_3:-Q1_13)
+
+
+#"その他"のQ1_14も削除
+kagome.survey <- kagome.survey %>% select(-Q1_14)
+
+kagome.survey <-
+  kagome.survey %>% select(id, SEX, AGE, PREFECTURE, JOB, 一人暮らし, 配偶者, 家族, everything())
+#家族のとこの1より大きい数字は1にする
+kagome.survey$家族  <-  ifelse(kagome.survey$家族  > 1, 1, kagome.survey$家族)
+
+# Q2~Q5に reverse codingする（1が良いことなので）
+
+kagome.survey$Q2_t <- 9 - kagome.survey$Q2_t
+kagome.survey$Q2_n <- 9 - kagome.survey$Q2_n
+kagome.survey$Q3_t <- 9 - kagome.survey$Q3_n
+kagome.survey$Q3_n <- 9 - kagome.survey$Q3_n
+kagome.survey$Q4_t <- 9 - kagome.survey$Q4_t
+kagome.survey$Q4_n <- 9 - kagome.survey$Q4_n
+kagome.survey$Q5_t <- 9 - kagome.survey$Q5_t
+kagome.survey$Q5_n <- 9 - kagome.survey$Q5_n
+
+kagome.survey$朝食の頻度  <- kagome.survey$Q2_t
+kagome.survey$日食の頻度  <- kagome.survey$Q2_n
+kagome.survey$外朝食の頻度  <- kagome.survey$Q3_t
+kagome.survey$外日食の頻度  <- kagome.survey$Q3_n
+kagome.survey$内朝食の頻度  <- kagome.survey$Q4_t
+kagome.survey$内日食の頻度  <- kagome.survey$Q4_n
+kagome.survey$作朝食の頻度  <- kagome.survey$Q5_t
+kagome.survey$作日食の頻度  <- kagome.survey$Q5_n
+
+kagome.survey <-
+  kagome.survey %>% select(-Q2_t, -Q2_n, -Q3_t, -Q3_n, -Q4_t, -Q4_n, -Q5_t, -Q5_n)
+
+kagome.survey <-
+  kagome.survey %>% select(
+    id,
+    SEX,
+    AGE,
+    PREFECTURE,
+    JOB,
+    一人暮らし,
+    配偶者,
+    家族,
+    朝食の頻度,
+    日食の頻度,
+    外朝食の頻度,
+    外日食の頻度,
+    内朝食の頻度,
+    内日食の頻度,
+    作朝食の頻度,
+    作日食の頻度,
+    everything()
+  )
+
+#Q6,Q7を自分：1、配偶者：2、家族：3にしたい
+kagome.survey$料理人  <- ifelse(kagome.survey$Q6 == 1 ,
+                             "自分",
+                             ifelse(kagome.survey$Q6 == 2 , "配偶者",
+                                    "家族"))
+
+kagome.survey$購入人  <- ifelse(kagome.survey$Q6 == 1 ,
+                             "自分",
+                             ifelse(kagome.survey$Q6 == 2 , "配偶者",
+                                    "家族"))
+kagome.survey <- kagome.survey %>% select(-Q6, -Q7)
+kagome.survey %>% tbl_df()
+
+write.csv(kagome.survey, "data.for.analysis.csv", row.names = F, fileEncoding = "cp932")
+
+#### pre processing end #####
