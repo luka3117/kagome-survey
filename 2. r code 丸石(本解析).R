@@ -25,10 +25,11 @@ d2 <- d2 %>%
   select(id:JOB,   朝食の頻度:購入人) %>%
   mutate(
     SEX = factor(SEX, labels = c("男性", "女性")),
-    JOB = factor(JOB, labels = c("学生", "その他")),
+    JOB = factor(JOB, labels = c("その他", "学生")),
     料理人  = factor(料理人, labels = c("ご自身", "配偶者", "家族")) ,
     購入人  = factor(購入人, labels = c("ご自身", "配偶者", "家族"))
   ) %>%
   select(id:JOB,   料理人,   購入人, everything())
 
 d2
+
